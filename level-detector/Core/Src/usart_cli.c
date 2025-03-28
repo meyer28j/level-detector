@@ -53,11 +53,20 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	char z_ascii[20];
 	char y_ascii[20];
 	char x_ascii[20];
+
+	if (is_level(accel_values))
+	{
+		snprintf(level, MSG_LEN, "%sLEVEL: %s\r\n", ANSI_CLEAR_LINE, "TRUE");
+	}
+	else
+	{
+		snprintf(level, MSG_LEN, "%sLEVEL: %s\r\n", ANSI_CLEAR_LINE, "FALSE");
+	}
+
 	itoa(accel_values.z, z_ascii, 16); // convert axis data to ascii
 	itoa(accel_values.y, y_ascii, 16); // convert axis data to ascii
 	itoa(accel_values.x, x_ascii, 16); // convert axis data to ascii
 
-	snprintf(level, MSG_LEN, "%sLEVEL: %s\r\n", ANSI_CLEAR_LINE, "UNINITIALIZED");
 	snprintf(z_axis, MSG_LEN,"%sZ-AXIS: %s\r\n", ANSI_CLEAR_LINE, z_ascii);
 	snprintf(y_axis, MSG_LEN,"%sY-AXIS: %s\r\n", ANSI_CLEAR_LINE, y_ascii);
 	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);

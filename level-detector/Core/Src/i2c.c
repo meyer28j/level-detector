@@ -39,8 +39,7 @@ AccelData read_accelerometer_data()
 
 	// enable LED if level
 	int16_t level_threshold = 0x400;
-	if (accel_values.y < level_threshold && accel_values.y > -level_threshold &&
-			accel_values.x < level_threshold && accel_values.x > -level_threshold)
+	if (is_level(accel_values))
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 	}
@@ -52,3 +51,16 @@ AccelData read_accelerometer_data()
 	return accel_values;
 }
 
+uint8_t is_level(AccelData accel_values)
+{
+	// enable LED if level
+	if (accel_values.y < LEVEL_THRESHOLD && accel_values.y > -LEVEL_THRESHOLD &&
+			accel_values.x < LEVEL_THRESHOLD && accel_values.x > -LEVEL_THRESHOLD)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

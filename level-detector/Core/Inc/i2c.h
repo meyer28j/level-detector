@@ -16,6 +16,8 @@
 #define LSM303DLHC_FLAG_AUTO_INCREMENT (0x80) // OR with subaddress to signal that the data register should auto-increment
 #define LSM303DLHC_CTRL_REG1_A (0x20) // data rate selection, low-power mode, and X/Y/Z axis-enable
 
+static const int16_t LEVEL_THRESHOLD = 0x400;
+
 // HAL handler auto-generated in main.c
 extern I2C_HandleTypeDef hi2c1;
 
@@ -31,5 +33,7 @@ HAL_StatusTypeDef accel_init();
 
 // use LSM303 auto-increment to read 6 bytes of consecutive data starting at X_L
 AccelData read_accelerometer_data();
+
+uint8_t is_level(AccelData accel_values);
 
 #endif /* SRC_I2C_H_ */
