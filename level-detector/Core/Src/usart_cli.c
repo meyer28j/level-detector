@@ -7,6 +7,7 @@
 
 
 #include <usart_cli.h>
+#include "version.h" // for printing build info (git hash, etc)
 
 static const char ANSI_ERASE_SCREEN[] = {"\x1b[2J"};
 static const char ANSI_SCROLL_WINDOW[] = {"\x1b[6;20r"};
@@ -15,13 +16,11 @@ static const char ANSI_SAVE_CURSOR_POS[] = {"\x1b[s"};
 static const char ANSI_RETURN_CURSOR_POS[] = {"\x1b[u"};
 static const char ANSI_MOVE_TO_STATUS_LINE[] = {"\x1b[1;0f"};
 
-static const char INTRO_MSG[] = "**Level Detector Debug terminal**\r\n";
+static const char INTRO_MSG[] = "**Level Detector Debug Terminal**\r\n";
 static const char HELP_MSG[] = "Commands:\r\n"
 		"(c)lear - Clear the command window\r\n"
 		"(h)elp - Display this message again\r\n";
 static const char PROMPT[] = "cmd> ";
-
-char build_info[256] = {'\0'};
 
 uint8_t c_pos = 0;
 char input[MAX_CLI_LEN] = {'\0'};
@@ -38,7 +37,7 @@ void CLIInit(UART_HandleTypeDef* huart)
 
 	strlcpy(response, ANSI_ERASE_SCREEN, MSG_LEN); 	// erase entire screen
 	strlcat(response, INTRO_MSG, MSG_LEN);			// print intro message
-	strlcat(response, build_info, MSG_LEN);
+	strlcat(response, GIT_COMMIT, MSG_LEN);			// print build info
 	strlcat(response, ANSI_SCROLL_WINDOW, MSG_LEN);	// create scroll window
 	strlcat(response, HELP_MSG, MSG_LEN);			// display help message
 	strlcat(response, PROMPT, MSG_LEN);				// display command prompt
@@ -79,8 +78,8 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);
 
 	// move cursor to status line, rewrite status line, restore cursor
-	snprintf(message, MSG_LEN, "%s%s%s%s%s%s%s%s", ANSI_SAVE_CURSOR_POS, ANSI_MOVE_TO_STATUS_LINE,
-			INTRO_MSG ,level, x_axis, y_axis, z_axis, ANSI_RETURN_CURSOR_POS);
+	snprintf(message, MSG_LEN, "%s%s%s%s%s%s%s%s%s", ANSI_SAVE_CURSOR_POS, ANSI_MOVE_TO_STATUS_LINE,
+			INTRO_MSG, GIT_COMMIT, level, x_axis, y_axis, z_axis, ANSI_RETURN_CURSOR_POS);
 
 	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
 
