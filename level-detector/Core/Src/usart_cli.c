@@ -9,11 +9,11 @@
 #include <usart_cli.h>
 
 static const char ANSI_ERASE_SCREEN[] = {"\x1b[2J"};
-static const char ANSI_SCROLL_WINDOW[] = {"\x1b[7;30r"};
+static const char ANSI_SCROLL_WINDOW[] = {"\x1b[6;20r"};
 static const char ANSI_CLEAR_LINE[] = {"\033[2K"};
 static const char ANSI_SAVE_CURSOR_POS[] = {"\x1b[s"};
 static const char ANSI_RETURN_CURSOR_POS[] = {"\x1b[u"};
-static const char ANSI_MOVE_TO_STATUS_LINE[] = {"\x1b[2;0f"};
+static const char ANSI_MOVE_TO_STATUS_LINE[] = {"\x1b[1;0f"};
 
 static const char INTRO_MSG[] = "**Level Detector Debug terminal**\r\n";
 static const char HELP_MSG[] = "Commands:\r\n"
@@ -79,8 +79,8 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);
 
 	// move cursor to status line, rewrite status line, restore cursor
-	snprintf(message, MSG_LEN, "%s%s%s%s%s%s%s", ANSI_SAVE_CURSOR_POS, ANSI_MOVE_TO_STATUS_LINE,
-			level, x_axis, y_axis, z_axis, ANSI_RETURN_CURSOR_POS);
+	snprintf(message, MSG_LEN, "%s%s%s%s%s%s%s%s", ANSI_SAVE_CURSOR_POS, ANSI_MOVE_TO_STATUS_LINE,
+			INTRO_MSG ,level, x_axis, y_axis, z_axis, ANSI_RETURN_CURSOR_POS);
 
 	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
 
@@ -105,7 +105,7 @@ void HandleInput(UART_HandleTypeDef* huart, uint8_t c)
 		else if (strcmp(input, "clear") == 0
 				|| strcmp(input,"c") == 0)
 		{ // clear the scroll window, rows 7-20
-			strlcpy(response, "\x1b[7;0H", MSG_LEN); // move cursor to row 7
+			strlcpy(response, "\x1b[6;0H", MSG_LEN); // move cursor to row 7
 			strlcat(response, "\x1b[0J", MSG_LEN); // clear all rows below
 			HAL_UART_Transmit(huart, (uint8_t*)response, strlen(response), TIMEOUT);
 		}
