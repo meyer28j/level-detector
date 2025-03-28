@@ -145,6 +145,7 @@ int main(void)
   CLIInit(&huart2); // initialize CLI
   HAL_UART_Receive_IT (&huart2, &RXChar, 1); // start receiving CLI input
   timer_start(&htim2); // start refresh timer
+  accel_init(); // configure I2C LSM303DLHC peripheral
 
   /* USER CODE END 2 */
 

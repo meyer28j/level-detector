@@ -7,13 +7,20 @@
 
 #include "i2c.h"
 
+HAL_StatusTypeDef accel_init()
+{
+	uint8_t ctrl_reg1_a_config = 0b01010111; // ODR = 100Hz, LPen = 0, Zen = 1, Yen = 1, Xen = 1
+
+	return HAL_I2C_Mem_Write(&hi2c1, LSM303DLHC_ADDRESS_ACCEL, LSM303DLHC_CTRL_REG1_A, 1,
+			&ctrl_reg1_a_config, 1, HAL_MAX_DELAY);
+}
+
 AccelData read_accelerometer_data()
 {
 	HAL_StatusTypeDef return_status;
 	uint8_t raw_data[LSM303DLHC_DATA_MAX_BYTES]; // data returned in 2 bytes
-	AccelData accel_values;
 
-	return_status = HAL_I2C_Mem_Read(hi2c1, LSM303DLHC_ADDRESS_ACCEL | LSM303DLHC_FLAG_AUTO_INCREMENT,
+	return_status = HAL_I2C_Mem_Read(&hi2c1, LSM303DLHC_ADDRESS_ACCEL | LSM303DLHC_FLAG_AUTO_INCREMENT,
 			LSM303DLHC_OUT_X_L_A, 1, raw_data, LSM303DLHC_DATA_MAX_BYTES, HAL_MAX_DELAY);
 	if (return_status != HAL_OK)
 	{

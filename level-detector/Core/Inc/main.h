@@ -33,6 +33,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "timer.h"
 #include "usart_cli.h"
+#include "i2c.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
