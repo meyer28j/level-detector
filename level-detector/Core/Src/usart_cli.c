@@ -21,6 +21,8 @@ static const char HELP_MSG[] = "Commands:\r\n"
 		"(h)elp - Display this message again\r\n";
 static const char PROMPT[] = "cmd> ";
 
+char build_info[256] = {'\0'};
+
 uint8_t c_pos = 0;
 char input[MAX_CLI_LEN] = {'\0'};
 char response[MSG_LEN] = {'\0'};
@@ -28,10 +30,15 @@ char response[MSG_LEN] = {'\0'};
 
 void CLIInit(UART_HandleTypeDef* huart)
 {
+	// fetch build info
+	//snprintf(build_info, MSG_LEN, "%s %s %s (%s)\r\n",
+	//		VERSION_BUILD_DATE, VERSION_BUILD_MACHINE, VERSION_TAG, VERSION_BUILD);
+
 	memset(response, 0, strlen(input)); // clear string buffer
 
 	strlcpy(response, ANSI_ERASE_SCREEN, MSG_LEN); 	// erase entire screen
 	strlcat(response, INTRO_MSG, MSG_LEN);			// print intro message
+	strlcat(response, build_info, MSG_LEN);
 	strlcat(response, ANSI_SCROLL_WINDOW, MSG_LEN);	// create scroll window
 	strlcat(response, HELP_MSG, MSG_LEN);			// display help message
 	strlcat(response, PROMPT, MSG_LEN);				// display command prompt
