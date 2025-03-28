@@ -9,7 +9,7 @@
 #include <usart_cli.h>
 
 static const char ANSI_ERASE_SCREEN[] = {"\x1b[2J"};
-static const char ANSI_SCROLL_WINDOW[] = {"\x1b[5;30r"};
+static const char ANSI_SCROLL_WINDOW[] = {"\x1b[7;30r"};
 static const char ANSI_CLEAR_LINE[] = {"\033[2K"};
 static const char ANSI_SAVE_CURSOR_POS[] = {"\x1b[s"};
 static const char ANSI_RETURN_CURSOR_POS[] = {"\x1b[u"};
@@ -48,25 +48,23 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	char message[MSG_LEN] = {'\0'};
 	char level[MSG_LEN] = {'\0'};
 	char z_axis[MSG_LEN] = {'\0'};
+	char y_axis[MSG_LEN] = {'\0'};
+	char x_axis[MSG_LEN] = {'\0'};
 	char z_ascii[20];
+	char y_ascii[20];
+	char x_ascii[20];
 	itoa(accel_values.z, z_ascii, 16); // convert axis data to ascii
+	itoa(accel_values.y, y_ascii, 16); // convert axis data to ascii
+	itoa(accel_values.x, x_ascii, 16); // convert axis data to ascii
 
-	strlcpy(level, ANSI_CLEAR_LINE, MSG_LEN);
-	strlcat(level, "LEVEL: ", MSG_LEN);
-	strlcat(level, "[UNINITIALIZED]\r\n", MSG_LEN);
+	snprintf(level, MSG_LEN, "%sLEVEL: %s\r\n", ANSI_CLEAR_LINE, "UNINITIALIZED");
+	snprintf(z_axis, MSG_LEN,"%sZ-AXIS: %s\r\n", ANSI_CLEAR_LINE, z_ascii);
+	snprintf(y_axis, MSG_LEN,"%sY-AXIS: %s\r\n", ANSI_CLEAR_LINE, y_ascii);
+	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);
 
-	strlcpy(z_axis, ANSI_CLEAR_LINE, MSG_LEN);
-	strlcat(z_axis, "Z-AXIS: ", MSG_LEN);
-	strlcat(z_axis, z_ascii, MSG_LEN);
-
-	strlcpy(message, ANSI_SAVE_CURSOR_POS, MSG_LEN);
-	// move cursor to status line
-	strlcat(message, ANSI_MOVE_TO_STATUS_LINE, MSG_LEN);
-	// rewrite status line
-	strlcat(message, level, MSG_LEN);
-	strlcat(message, z_axis, MSG_LEN);
-	// move cursor to previous position
-	strlcat(message, ANSI_RETURN_CURSOR_POS, MSG_LEN);
+	// move cursor to status line, rewrite status line, restore cursor
+	snprintf(message, MSG_LEN, "%s%s%s%s%s%s%s", ANSI_SAVE_CURSOR_POS, ANSI_MOVE_TO_STATUS_LINE,
+			level, x_axis, y_axis, z_axis, ANSI_RETURN_CURSOR_POS);
 
 	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
 
@@ -91,7 +89,7 @@ void HandleInput(UART_HandleTypeDef* huart, uint8_t c)
 		else if (strcmp(input, "clear") == 0
 				|| strcmp(input,"c") == 0)
 		{ // clear the scroll window, rows 7-20
-			strlcpy(response, "\x1b[4;0H", MSG_LEN); // move cursor to row 7
+			strlcpy(response, "\x1b[7;0H", MSG_LEN); // move cursor to row 7
 			strlcat(response, "\x1b[0J", MSG_LEN); // clear all rows below
 			HAL_UART_Transmit(huart, (uint8_t*)response, strlen(response), TIMEOUT);
 		}
