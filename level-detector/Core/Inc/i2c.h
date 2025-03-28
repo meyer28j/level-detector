@@ -3,7 +3,7 @@
  * @author Jacob Meyer
  * @brief This file contains the implementation of I2C functions for the LSM303DLHC.
  *
- * Specifically, it retrieves the X/Y/Z readings from the linear accelerometer
+ * This module retrieves the X/Y/Z readings from the linear accelerometer
  * and returns them in the form of a struct "AccelData." It also provides a boolean
  * check for whether the data can be interpreted as the device being in a level
  * orientation within a specified tolerance.
