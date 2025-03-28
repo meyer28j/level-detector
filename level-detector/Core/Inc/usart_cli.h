@@ -13,10 +13,10 @@
 #include <stdint.h>
 #include <stdlib.h> // itoa
 #include "stm32f1xx_hal.h"
-#include "i2c.h" // access to static global accel_values
+#include "i2c.h" // access to reading accelerometer
 
 #define MAX_CLI_LEN 30 		// input character limit
-#define MSG_LEN 512			// response character limit
+#define MSG_LEN 256		// response character limit
 #define TIMEOUT 3000		// maximum wait time
 
 extern uint8_t c_pos; 			// input character position, for tracking /b

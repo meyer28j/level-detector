@@ -36,6 +36,19 @@ AccelData read_accelerometer_data()
 		accel_values.x = (int16_t)(raw_data[4] | (raw_data[5] << 8));
 	}
 
+
+	// enable LED if level
+	int16_t level_threshold = 0x400;
+	if (accel_values.y < level_threshold && accel_values.y > -level_threshold &&
+			accel_values.x < level_threshold && accel_values.x > -level_threshold)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	}
+	else
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	}
+
 	return accel_values;
 }
 
