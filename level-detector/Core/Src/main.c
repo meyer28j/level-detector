@@ -142,10 +142,13 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  if (accel_init() != HAL_OK) // configure I2C LSM303DLHC peripheral
+   {
+ 	  Error_Handler();
+   }
   CLIInit(&huart2); // initialize CLI
   HAL_UART_Receive_IT (&huart2, &RXChar, 1); // start receiving CLI input
   timer_start(&htim2); // start refresh timer
-  accel_init(); // configure I2C LSM303DLHC peripheral
 
   /* USER CODE END 2 */
 

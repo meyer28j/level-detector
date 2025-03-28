@@ -11,7 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h> // itoa
 #include "stm32f1xx_hal.h"
+#include "i2c.h" // access to static global accel_values
 
 #define MAX_CLI_LEN 30 		// input character limit
 #define MSG_LEN 512			// response character limit

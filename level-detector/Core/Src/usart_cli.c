@@ -42,30 +42,35 @@ void CLIInit(UART_HandleTypeDef* huart)
 
 void RefreshStatus(UART_HandleTypeDef* huart)
 {
-        char message[MSG_LEN] = {'\0'};
-        char level[MSG_LEN] = {'\0'};
-        char z_axis[MSG_LEN] = {'\0'};
+	// TODO: move this to be timer based
+	AccelData accel_values = read_accelerometer_data();
 
-        strlcpy(level, ANSI_CLEAR_LINE, MSG_LEN);
-        strlcat(level, "LEVEL: ", MSG_LEN);
-        strlcat(level, "[UNINITIALIZED]\r\n", MSG_LEN);
+	char message[MSG_LEN] = {'\0'};
+	char level[MSG_LEN] = {'\0'};
+	char z_axis[MSG_LEN] = {'\0'};
+	char z_ascii[20];
+	itoa(accel_values.z, z_ascii, 16); // convert axis data to ascii
 
-        strlcpy(z_axis, ANSI_CLEAR_LINE, MSG_LEN);
-		strlcat(z_axis, "Z-AXIS: ", MSG_LEN);
-		strlcat(z_axis, "[UNINITIALIZED]", MSG_LEN);
+	strlcpy(level, ANSI_CLEAR_LINE, MSG_LEN);
+	strlcat(level, "LEVEL: ", MSG_LEN);
+	strlcat(level, "[UNINITIALIZED]\r\n", MSG_LEN);
 
-        strlcpy(message, ANSI_SAVE_CURSOR_POS, MSG_LEN);
-        // move cursor to status line
-        strlcat(message, ANSI_MOVE_TO_STATUS_LINE, MSG_LEN);
-        // rewrite status line
-        strlcat(message, level, MSG_LEN);
-        strlcat(message, z_axis, MSG_LEN);
-        // move cursor to previous position
-        strlcat(message, ANSI_RETURN_CURSOR_POS, MSG_LEN);
+	strlcpy(z_axis, ANSI_CLEAR_LINE, MSG_LEN);
+	strlcat(z_axis, "Z-AXIS: ", MSG_LEN);
+	strlcat(z_axis, z_ascii, MSG_LEN);
 
-        HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
+	strlcpy(message, ANSI_SAVE_CURSOR_POS, MSG_LEN);
+	// move cursor to status line
+	strlcat(message, ANSI_MOVE_TO_STATUS_LINE, MSG_LEN);
+	// rewrite status line
+	strlcat(message, level, MSG_LEN);
+	strlcat(message, z_axis, MSG_LEN);
+	// move cursor to previous position
+	strlcat(message, ANSI_RETURN_CURSOR_POS, MSG_LEN);
 
-        return;
+	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
+
+    return;
 }
 
 void HandleInput(UART_HandleTypeDef* huart, uint8_t c)
