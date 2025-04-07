@@ -10,7 +10,7 @@
 #include "version.h" // for printing build info (git hash, etc)
 
 static const char ANSI_ERASE_SCREEN[] = {"\x1b[2J"};
-static const char ANSI_SCROLL_WINDOW[] = {"\x1b[6;20r"};
+static const char ANSI_SCROLL_WINDOW[] = {"\x1b[9;20r"};
 static const char ANSI_CLEAR_LINE[] = {"\033[2K"};
 static const char ANSI_SAVE_CURSOR_POS[] = {"\x1b[s"};
 static const char ANSI_RETURN_CURSOR_POS[] = {"\x1b[u"};
@@ -19,6 +19,7 @@ static const char ANSI_HIDE_CURSOR[] = {"\x1b[?25l"};
 static const char ANSI_SHOW_CURSOR[] = {"\x1b[?25h"};
 
 static const char INTRO_MSG[] = "**Level Detector Debug Terminal**\r\n";
+static const char SEPARATOR[] = "===================\r\n";
 static const char HELP_MSG[] = "Commands:\r\n"
 		"(c)lear - Clear the command window\r\n"
 		"(h)elp - Display this message again\r\n";
@@ -31,18 +32,16 @@ char response[MSG_LEN] = {'\0'};
 
 void CLIInit(UART_HandleTypeDef* huart)
 {
-	// fetch build info
-	//snprintf(build_info, MSG_LEN, "%s %s %s (%s)\r\n",
-	//		VERSION_BUILD_DATE, VERSION_BUILD_MACHINE, VERSION_TAG, VERSION_BUILD);
-
 	memset(response, 0, strlen(input)); // clear string buffer
 
-	strlcpy(response, ANSI_ERASE_SCREEN, MSG_LEN); 	// erase entire screen
-	strlcat(response, INTRO_MSG, MSG_LEN);			// print intro message
-	strlcat(response, GIT_COMMIT, MSG_LEN);			// print build info
-	strlcat(response, ANSI_SCROLL_WINDOW, MSG_LEN);	// create scroll window
-	strlcat(response, HELP_MSG, MSG_LEN);			// display help message
-	strlcat(response, PROMPT, MSG_LEN);				// display command prompt
+	snprintf(response, MSG_LEN, "%s%s%s%s%s%s%s",
+			ANSI_ERASE_SCREEN,		// erase entire screen
+			INTRO_MSG,				// print intro message
+			GIT_COMMIT,				// print build info
+			SEPARATOR,
+			ANSI_SCROLL_WINDOW,		// create scroll window
+			HELP_MSG,				// display help message
+			PROMPT);				// display command prompt
 
 	HAL_UART_Transmit(huart, (uint8_t*)response, strlen(response), TIMEOUT);
 	RefreshStatus(huart);
@@ -53,17 +52,17 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	// TODO: move this to be timer based
 	AccelData accel_values = read_accelerometer_data();
 
-	char message[MSG_LEN] = {'\0'}; 	// the final combined message to transmit
-	char level[64] = {'\0'}; 			// TRUE or FALSE based on x/y/z data
-	char z_axis[64] = {'\0'}; 			// displays message of each axis data
-	char y_axis[64] = {'\0'};
-	char x_axis[64] = {'\0'};
-	char z_ascii[20] = {'\0'}; 			// stores integer data as string
+	char message[MSG_LEN] = {'\0'}; 		// the final combined message to transmit
+	char level[32] = {'\0'}; 				// TRUE or FALSE based on x/y/z data
+	char z_axis[32] = {'\0'}; 				// displays message of each axis data
+	char y_axis[32] = {'\0'};
+	char x_axis[32] = {'\0'};
+	char z_ascii[20] = {'\0'}; 				// stores integer data as string
 	char y_ascii[20] = {'\0'};
 	char x_ascii[20] = {'\0'};
-	char move_to_status[64] = {'\0'};	// ANSI characters for moving to status line
-	char data[MSG_LEN] = {'\0'};		// combined messages for each data line
-	char move_to_cmd[64] = {'\0'};		// ANSI characters for returning to cmd> line
+	char move_to_status[MSG_LEN] = {'\0'};	// ANSI characters for moving to status line
+	char data[MSG_LEN] = {'\0'};			// combined messages for each data line
+	char move_to_cmd[64] = {'\0'};			// ANSI characters for returning to cmd> line
 
 	if (is_level(accel_values))
 	{
@@ -85,24 +84,27 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);
 
 	// populate each ANSI char and data sequence
-	snprintf(move_to_status, MSG_LEN, "%s%s%s%s",
+	snprintf(move_to_status, MSG_LEN, "%s%s%s%s%s%s",
 			ANSI_SAVE_CURSOR_POS,
 			ANSI_HIDE_CURSOR,
 			ANSI_MOVE_TO_STATUS_LINE,
-			INTRO_MSG);
+			INTRO_MSG,
+			GIT_COMMIT,
+			SEPARATOR);
 	snprintf(data, MSG_LEN, "%s%s%s%s",
 			level,
 			x_axis,
 			y_axis,
 			z_axis);
-	snprintf(move_to_cmd, MSG_LEN, "%s%s",
+	snprintf(move_to_cmd, MSG_LEN, "%s%s%s",
+			SEPARATOR,
 			ANSI_RETURN_CURSOR_POS,
 			ANSI_SHOW_CURSOR);
 
-	// combine status line rewrite steps into a single message
-	snprintf(message, MSG_LEN, "%s%s%s", move_to_status, data, move_to_cmd);
-
-	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
+	// transmit each ansi/data message
+	HAL_UART_Transmit(huart, (uint8_t*)move_to_status, strlen(move_to_status), TIMEOUT);
+	HAL_UART_Transmit(huart, (uint8_t*)data, strlen(data), TIMEOUT);
+	HAL_UART_Transmit(huart, (uint8_t*)move_to_cmd, strlen(move_to_cmd), TIMEOUT);
 
     return;
 }
@@ -124,8 +126,8 @@ void HandleInput(UART_HandleTypeDef* huart, uint8_t c)
 		}
 		else if (strcmp(input, "clear") == 0
 				|| strcmp(input,"c") == 0)
-		{ // clear the scroll window, rows 7-20
-			strlcpy(response, "\x1b[6;0H", MSG_LEN); // move cursor to row 7
+		{ // clear the scroll window, rows 9-20
+			strlcpy(response, "\x1b[9;0H", MSG_LEN); // move cursor to row 9
 			strlcat(response, "\x1b[0J", MSG_LEN); // clear all rows below
 			HAL_UART_Transmit(huart, (uint8_t*)response, strlen(response), TIMEOUT);
 		}
