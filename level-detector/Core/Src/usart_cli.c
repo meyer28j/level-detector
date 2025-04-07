@@ -57,9 +57,6 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	char z_axis[32] = {'\0'}; 				// displays message of each axis data
 	char y_axis[32] = {'\0'};
 	char x_axis[32] = {'\0'};
-	char z_ascii[20] = {'\0'}; 				// stores integer data as string
-	char y_ascii[20] = {'\0'};
-	char x_ascii[20] = {'\0'};
 	char move_to_status[MSG_LEN] = {'\0'};	// ANSI characters for moving to status line
 	char data[MSG_LEN] = {'\0'};			// combined messages for each data line
 	char move_to_cmd[64] = {'\0'};			// ANSI characters for returning to cmd> line
@@ -73,15 +70,10 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 		snprintf(level, MSG_LEN, "%sLEVEL: %s\r\n", ANSI_CLEAR_LINE, "FALSE");
 	}
 
-	// convert axis data to ascii
-	itoa(accel_values.z, z_ascii, 16);
-	itoa(accel_values.y, y_ascii, 16);
-	itoa(accel_values.x, x_ascii, 16);
-
 	// populate axis data lines
-	snprintf(z_axis, MSG_LEN,"%sZ-AXIS: %s\r\n", ANSI_CLEAR_LINE, z_ascii);
-	snprintf(y_axis, MSG_LEN,"%sY-AXIS: %s\r\n", ANSI_CLEAR_LINE, y_ascii);
-	snprintf(x_axis, MSG_LEN,"%sX-AXIS: %s\r\n", ANSI_CLEAR_LINE, x_ascii);
+	snprintf(z_axis, MSG_LEN, "%sZ-AXIS: %d\r\n", ANSI_CLEAR_LINE, accel_values.z);
+	snprintf(y_axis, MSG_LEN, "%sY-AXIS: %d\r\n", ANSI_CLEAR_LINE, accel_values.y);
+	snprintf(x_axis, MSG_LEN, "%sX-AXIS: %d\r\n", ANSI_CLEAR_LINE, accel_values.x);
 
 	// populate each ANSI char and data sequence
 	snprintf(move_to_status, MSG_LEN, "%s%s%s%s%s%s",
