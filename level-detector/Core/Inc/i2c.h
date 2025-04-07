@@ -9,8 +9,8 @@
  * orientation within a specified tolerance.
  */
 
-#ifndef SRC_I2C_H_
-#define SRC_I2C_H_
+#ifndef INC_I2C_H_
+#define INC_I2C_H_
 
 #include "stm32f1xx_hal.h"
 
@@ -76,4 +76,4 @@ AccelData read_accelerometer_data();
  */
 uint8_t is_level(AccelData accel_values);
 
-#endif /* SRC_I2C_H_ */
+#endif /* INC_I2C_H_ */
