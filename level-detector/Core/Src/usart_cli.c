@@ -14,7 +14,7 @@ static const char ANSI_SCROLL_WINDOW[] = {"\x1b[6;20r"};
 static const char ANSI_CLEAR_LINE[] = {"\033[2K"};
 static const char ANSI_SAVE_CURSOR_POS[] = {"\x1b[s"};
 static const char ANSI_RETURN_CURSOR_POS[] = {"\x1b[u"};
-static const char ANSI_MOVE_TO_STATUS_LINE[] = {"\x1b[H"};//{"\x1b[2;0f"};
+static const char ANSI_MOVE_TO_STATUS_LINE[] = {"\x1b[H"};
 static const char ANSI_HIDE_CURSOR[] = {"\x1b[?25l"};
 static const char ANSI_SHOW_CURSOR[] = {"\x1b[?25h"};
 
@@ -54,8 +54,8 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 	AccelData accel_values = read_accelerometer_data();
 
 	char message[MSG_LEN] = {'\0'}; 	// the final combined message to transmit
-	char level[64] = {'\0'}; 		// TRUE or FALSE based on x/y/z data
-	char z_axis[64] = {'\0'}; 		// displays message of each axis data
+	char level[64] = {'\0'}; 			// TRUE or FALSE based on x/y/z data
+	char z_axis[64] = {'\0'}; 			// displays message of each axis data
 	char y_axis[64] = {'\0'};
 	char x_axis[64] = {'\0'};
 	char z_ascii[20] = {'\0'}; 			// stores integer data as string
@@ -100,14 +100,9 @@ void RefreshStatus(UART_HandleTypeDef* huart)
 			ANSI_SHOW_CURSOR);
 
 	// combine status line rewrite steps into a single message
-	snprintf(message, MSG_LEN, "%s%s%s",
-			move_to_status,
-			data, move_to_cmd);
+	snprintf(message, MSG_LEN, "%s%s%s", move_to_status, data, move_to_cmd);
 
-	HAL_UART_Transmit(huart, (uint8_t*)move_to_status, strlen(move_to_status), TIMEOUT);
-	HAL_UART_Transmit(huart, (uint8_t*)data, strlen(data), TIMEOUT);
-	HAL_UART_Transmit(huart, (uint8_t*)move_to_cmd, strlen(move_to_cmd), TIMEOUT);
-	//HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
+	HAL_UART_Transmit(huart, (uint8_t*)message, strlen(message), TIMEOUT);
 
     return;
 }
