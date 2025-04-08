@@ -10,6 +10,7 @@
 #define INC_WS2812B_H_
 
 #include "stm32f1xx_hal.h"
+#include "i2c.h" // AccelData struct
 
 // defined in main.c by HAL library and .ioc file generation
 extern TIM_HandleTypeDef htim3;
@@ -31,5 +32,7 @@ void WS2812B_init();
 void WS2812B_update();
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b);
+
+void WS2812B_point(AccelData acceldata);
 
 #endif /* INC_WS2812B_H_ */

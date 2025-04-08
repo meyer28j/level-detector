@@ -26,6 +26,7 @@ void WS2812B_update()
 	HAL_Delay(200);
 	HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1);
 	HAL_Delay(200);
+}
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b)
 {
@@ -43,4 +44,9 @@ void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b
 	{
 		led_pwm_data[led_index][i + 16] = (b & (1 << (7 - i))) ? WS2812B_BIT_1_HIGH : WS2812B_BIT_0_HIGH;
 	}
+}
+
+void WS2812B_point(AccelData acceldata)
+{
+	return;
 }
