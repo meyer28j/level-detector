@@ -48,5 +48,8 @@ void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b
 
 void WS2812B_point(AccelData acceldata)
 {
+	// truncate the axis data to one of 8 steps in the range [-4, 4]
+	int16_t x_scaled = (int8_t)(((int32_t)acceldata.x * 4) / MAX_AT_REST);
+	int16_t y_scaled = (int8_t)(((int32_t)acceldata.y * 4) / MAX_AT_REST);
 	return;
 }

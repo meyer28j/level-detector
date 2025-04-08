@@ -178,6 +178,7 @@ int main(void)
 			WS2812B_set_pixel_color(j, 0, 0, i * 2);
 		}
 		WS2812B_update();
+		WS2812B_point(read_accelerometer_data());
 	}
   }
   /* USER CODE END 3 */
