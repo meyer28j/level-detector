@@ -34,6 +34,7 @@ extern "C" {
 #include "timer.h"
 #include "usart_cli.h"
 #include "i2c.h"
+#include "ws2812b.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
