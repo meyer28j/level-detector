@@ -44,6 +44,7 @@ I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 UART_HandleTypeDef huart2;
 
@@ -56,6 +57,7 @@ HAL_StatusTypeDef status; // HAL_OK, HAL_ERROR, HAL_BUSY, HAL_TIMEOUT
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
@@ -139,6 +141,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
@@ -152,7 +155,13 @@ int main(void)
   CLIInit(&huart2); // initialize CLI
   HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
   timer_start(&htim2); // start refresh timer
+  WS2812B_init(); // start data flow to LED matrix
 
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+	  WS2812B_set_pixel_color(i, 0, 0, 8);
+  }
+  WS2812B_update();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,6 +171,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	for (int i = 0; i < 8; i ++)
+	{
+		for (int j = 0; j < NUM_LEDS; j++)
+		{
+			WS2812B_set_pixel_color(j, 0, 0, i * 2);
+		}
+		WS2812B_update();
+	}
   }
   /* USER CODE END 3 */
 }
@@ -379,6 +396,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
