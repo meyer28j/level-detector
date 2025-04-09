@@ -22,7 +22,7 @@ extern DMA_HandleTypeDef hdma_tim3_ch1_trig;
 #define NUM_LEDS 64
 #define BITS_PER_TRANSFER 24
 
-extern uint16_t led_pwm_data[NUM_LEDS][BITS_PER_TRANSFER];
+extern uint32_t led_pwm_data[NUM_LEDS][BITS_PER_TRANSFER];
 
 void WS2812B_init();
 
