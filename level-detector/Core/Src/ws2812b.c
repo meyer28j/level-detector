@@ -72,20 +72,15 @@ void WS2812B_point(AccelData accel_values)
 	// X-AXIS: along breadboard long-side
 	// Y-AXIS: along breadboard short-side
 
-	// truncate the axis data to one of 8 steps in the range [-4, 4]
-	int16_t x_scaled = (int8_t)(((int32_t)accel_values.x * 4) / MAX_AT_REST);
-	int16_t y_scaled = (int8_t)(((int32_t)accel_values.y * 4) / MAX_AT_REST);
+	// truncate the axis data to one of 8 steps in the range [0, 7]
+	uint8_t x_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
+	int16_t y_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
 
-	uint8_t pixels[abs_impl(x_scaled) + abs_impl(y_scaled)];
-	uint8_t y_shift[abs_impl(x_scaled) + abs_impl(y_scaled)];
+	uint16_t pixel = x_scaled * 8 + y_scaled;
+
+	WS2812B_set_pixel_color(pixel, 0, 8, 0);
 	// select matrix "row" according to y-axis data
-	if (y_scaled < 0)
-	{
-		for (int i = y_scaled; i < 0; i++)
-		{
 
-		}
-	}
 
 
 	// select matrix "column" according to x-axis data
