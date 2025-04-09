@@ -77,8 +77,8 @@ void WS2812B_point(AccelData accel_values)
 	int16_t x_scaled = (int8_t)(((int32_t)accel_values.x * 4) / MAX_AT_REST);
 	int16_t y_scaled = (int8_t)(((int32_t)accel_values.y * 4) / MAX_AT_REST);
 
-	uint8_t pixels[abs(x_scaled) + abs(y_scaled)] = {0};
-	uint8_t y_shift[abs(x_scaled) + abs(y_scaled)];
+	uint8_t pixels[abs_impl(x_scaled) + abs_impl(y_scaled)];
+	uint8_t y_shift[abs_impl(x_scaled) + abs_impl(y_scaled)];
 	// select matrix "row" according to y-axis data
 	if (y_scaled < 0)
 	{
@@ -92,4 +92,9 @@ void WS2812B_point(AccelData accel_values)
 	// select matrix "column" according to x-axis data
 
 	return;
+}
+
+int16_t abs_impl(int16_t val)
+{
+	return val ? val >= 0 : -val;
 }
