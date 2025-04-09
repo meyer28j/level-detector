@@ -31,7 +31,6 @@ void WS2812B_clear()
 		// turn off all leds
 		WS2812B_set_pixel_color(i, 0, 0, 0);
 	}
-	WS2812B_update();
 }
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b)
