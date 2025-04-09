@@ -171,15 +171,26 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	for (int i = 0; i < 8; i ++)
+
+	//WS2812B_point(read_accelerometer_data());
+	// TMP: test code to observe led matrix updating
+	for (int j = 0; j < NUM_LEDS; j++)
 	{
-		for (int j = 0; j < NUM_LEDS; j++)
-		{
-			WS2812B_set_pixel_color(j, 0, 0, i * 2);
-		}
+		WS2812B_set_pixel_color(j, 0, 0, 8);
 		WS2812B_update();
-		WS2812B_point(read_accelerometer_data());
 	}
+	for (int j = 0; j < NUM_LEDS; j++)
+	{
+		WS2812B_set_pixel_color(j, 0, 8, 0);
+		WS2812B_update();
+	}
+	for (int j = 0; j < NUM_LEDS; j++)
+	{
+		WS2812B_set_pixel_color(j, 8, 0, 0);
+		WS2812B_update();
+	}
+
+
   }
   /* USER CODE END 3 */
 }
