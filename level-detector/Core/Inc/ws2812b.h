@@ -31,8 +31,10 @@ void WS2812B_init();
 
 void WS2812B_update();
 
+void WS2812B_clear();
+
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b);
 
-void WS2812B_point(AccelData acceldata);
+void WS2812B_point(AccelData accel_values);
 
 #endif /* INC_WS2812B_H_ */
