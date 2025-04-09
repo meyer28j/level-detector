@@ -52,6 +52,8 @@ UART_HandleTypeDef huart2;
 uint8_t RXChar; // input character from HAL_UART
 
 HAL_StatusTypeDef status; // HAL_OK, HAL_ERROR, HAL_BUSY, HAL_TIMEOUT
+
+uint8_t imu_data_ready = 0; // flag set by refresh timer; caught by main to refresh CLI and LEDs
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,10 +105,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-        if (htim->Instance == TIM2)
+        if (htim->Instance == TIM2 && !imu_data_ready)
         {
-                // handle console refresh
-                RefreshStatus(&huart2);
+        	// set flag; unset in main loop after data is processed
+        	imu_data_ready = 1;
         }
 }
 
@@ -171,9 +173,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+	if (imu_data_ready)
+	{
+		// fetch accelerometer data
+		AccelData accel_values = read_accelerometer_data();
+		// handle console refresh
+		RefreshStatus(&huart2, accel_values);
+		WS2812B_point(accel_values);
+		WS2812B_update();
+		// reset flag; set by refresh timer only if unset on timeout
+		imu_data_ready = 0;
+	}
 	//WS2812B_point(read_accelerometer_data());
 	// TMP: test code to observe led matrix updating
+	  /*
 	for (int j = 0; j < NUM_LEDS; j++)
 	{
 		WS2812B_set_pixel_color(j, 0, 0, 8);
@@ -189,8 +202,7 @@ int main(void)
 		WS2812B_set_pixel_color(j, 8, 0, 0);
 		WS2812B_update();
 	}
-
-
+*/
   }
   /* USER CODE END 3 */
 }
