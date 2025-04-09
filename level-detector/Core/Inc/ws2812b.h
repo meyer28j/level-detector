@@ -17,10 +17,7 @@ extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 #define WS2812B_BIT_0_HIGH	26	// approx 0.4us
-#define WS2812B_BIT_0_LOW	54	// approx 0.8us
 #define WS2812B_BIT_1_HIGH	51	// approx 0.85us
-#define WS2812B_BIT_1_LOW	29	// approx 0.45us
-#define WS2812B_RESET 		79	// full ARR length
 
 #define NUM_LEDS 64
 #define BITS_PER_TRANSFER 24
