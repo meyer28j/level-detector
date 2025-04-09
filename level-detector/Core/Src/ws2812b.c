@@ -19,9 +19,9 @@ void WS2812B_init()
 void WS2812B_update()
 {
 	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*)led_pwm_data, (uint16_t)(NUM_LEDS * BITS_PER_TRANSFER));
-	HAL_Delay(200);
+	HAL_Delay(2);
 	HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1);
-	HAL_Delay(200);
+	HAL_Delay(2);
 }
 
 void WS2812B_clear()
