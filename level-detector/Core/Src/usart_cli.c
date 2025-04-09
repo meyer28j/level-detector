@@ -44,15 +44,11 @@ void CLIInit(UART_HandleTypeDef* huart)
 			PROMPT);				// display command prompt
 
 	HAL_UART_Transmit(huart, (uint8_t*)response, strlen(response), TIMEOUT);
-	RefreshStatus(huart);
+	RefreshStatus(huart, read_accelerometer_data());
 }
 
-void RefreshStatus(UART_HandleTypeDef* huart)
+void RefreshStatus(UART_HandleTypeDef* huart, AccelData accel_values)
 {
-	// TODO: move this to be timer based
-	AccelData accel_values = read_accelerometer_data();
-
-	char message[MSG_LEN] = {'\0'}; 		// the final combined message to transmit
 	char level[32] = {'\0'}; 				// TRUE or FALSE based on x/y/z data
 	char z_axis[32] = {'\0'}; 				// displays message of each axis data
 	char y_axis[32] = {'\0'};

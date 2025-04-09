@@ -46,8 +46,9 @@ void CLIInit(UART_HandleTypeDef* huart);
  * @brief Refreshes the UART display with updated accelerometer data.
  *
  * @param[in] huart is the HAL global handler for uart peripherals.
+ * @param[in] accel_values is LSM303DLHC accelerometer data to be displayed.
  */
-void RefreshStatus(UART_HandleTypeDef* huart);
+void RefreshStatus(UART_HandleTypeDef* huart, AccelData accel_values);
 
 /**
  * @brief Handles individual character input from the UART receive interrupt.
