@@ -22,11 +22,19 @@
 #define LSM303DLHC_CTRL_REG3_A (0x22) // interrupt enable
 
 /**
- * @brief Specifies the minimum threshold of axes readings before accepting that the device is level.
+ * @brief The minimum threshold of axes readings before accepting that the device is level.
  *
  * It is used in the is_level function to return a boolean value (0 or 1) accordingly.
  */
 static const int16_t LEVEL_THRESHOLD = 1000;
+
+/**
+ * @ brief The step value for determining how near level the device is within the larger level threshold.
+ *
+ * It is used in the is_near_level function to return a value in the
+ * range [1, 5] and used to modulate the brightness of the center pixels.
+ */
+static const uint8_t LEVEL_THRESHOLD_STEP = LEVEL_THRESHOLD / 5;
 
 /**
  * @brief Specifies an approximation of the maximum meaningful value of gravity read by the IMU at rest.
@@ -84,9 +92,17 @@ AccelData read_accelerometer_data();
 /**
  * @brief Checks if both the X and Y axis data are within the level tolerance.
  *
- * @param none
+ * @param[in] accel_values is the raw X/Y/Z accelerometer data.
  * @return 1 if within tolerance, 0 otherwise.
  */
 uint8_t is_level(AccelData accel_values);
+
+/**
+ * @brief Compares the combined magnitude of the X and Y data with the level threshold steps.
+ *
+ * @param[in] accel_values is the raw X/Y/Z accelerometer data.
+ * @return a value in the range [1, 5] indicating how near level the device is, 0 otherwise
+ */
+int8_t is_near_level(AccelData accel_values);
 
 #endif /* INC_I2C_H_ */
