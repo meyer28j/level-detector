@@ -72,6 +72,56 @@ void WS2812B_set_center_color(uint8_t g, uint8_t r, uint8_t b)
 
 }
 
+void WS2812B_set_edge_colors(AccelData accel_values, uint8_t g, uint8_t r, uint8_t b)
+{
+	if (abs_impl(accel_values.x) < MAX_AT_REST && abs_impl(accel_values.y) < MAX_AT_REST)
+	{
+		// all accel values are within legal bounds
+		return;
+	}
+
+	static const uint8_t EDGE_PIXELS[4][MATRIX_LENGTH] = {
+			{56, 57, 58, 59, 60, 61, 62, 63},
+			{7, 8, 23, 24, 39, 40, 55, 56},
+			{0, 1, 2, 3, 4, 5, 6, 7},
+			{0, 15, 16, 31, 32, 47, 48, 63}
+	};
+
+	uint8_t edge_tb = -1; // top/bottom edge
+	uint8_t edge_lr = -1; // left/right edge
+	if (accel_values.x < -MAX_AT_REST)
+	{
+		edge_tb = 2;
+	}
+	else if (accel_values.x > MAX_AT_REST)
+	{
+		edge_tb = 0;
+	}
+	if (accel_values.y < -MAX_AT_REST)
+	{
+		edge_lr = 3;
+	}
+	else if (accel_values.y > MAX_AT_REST)
+	{
+		edge_lr = 1;
+	}
+
+	if (edge_tb != -1)
+	{
+		for (int i = 0; i < MATRIX_LENGTH; i++)
+		{
+			WS2812B_set_pixel_color(EDGE_PIXELS[edge_tb][i], g, r, b);
+		}
+	}
+	if (edge_lr != -1)
+	{
+		for (int i = 0; i < MATRIX_LENGTH; i++)
+		{
+			WS2812B_set_pixel_color(EDGE_PIXELS[edge_lr][i], g, r, b);
+		}
+	}
+}
+
 void WS2812B_point(AccelData accel_values)
 {
 	WS2812B_clear();
@@ -85,6 +135,14 @@ void WS2812B_point(AccelData accel_values)
 
 	// display center 4 LEDs as blue for clearer "pointer" indication
 	WS2812B_set_center_color(0, 0, 16);
+
+	// if any axis is outside the max range,
+	// display the corresponding edge as red; return
+	if (abs_impl(accel_values.x) > MAX_AT_REST || abs_impl(accel_values.y) > MAX_AT_REST)
+	{
+		WS2812B_set_edge_colors(accel_values, 0, 16, 0);
+		return;
+	}
 
 	// maximum number of steps from one side of the matrix to the other
 	static const uint8_t NUM_STEPS = MATRIX_LENGTH - 1;
