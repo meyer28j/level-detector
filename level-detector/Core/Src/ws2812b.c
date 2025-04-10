@@ -76,31 +76,54 @@ void WS2812B_point(AccelData accel_values)
 		return;
 	}
 
+	// maximum number of steps from one side of the matrix to the other
+	static const uint8_t NUM_STEPS = 8 - 1;
+
 	// X-AXIS: along breadboard long-side: decides COLUMN of pixel position
 	// Y-AXIS: along breadboard short-side : decides ROW of pixel position
 
 	// define line "start" as one of 4 center pixels
-	int8_t x0_scaled = 3 ? accel_values.x < 0 : 4;
-	int8_t y0_scaled = 3 ? accel_values.y > 0 : 4;
+	int8_t x0_scaled = NUM_STEPS / 2 ? accel_values.x < 0 : NUM_STEPS / 2 + 1;
+	int8_t y0_scaled = NUM_STEPS / 2 ? accel_values.y > 0 : NUM_STEPS / 2 + 1;
 
-	// define line "end" by truncating the axis data to one of 8 steps in the range [0, 7]
-	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
-	uint8_t y1_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
+	// define line "end" by truncating the axis data to one of 8 positions in the range [0, 7]
+	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
+	uint8_t y1_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
 
 	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
-	uint16_t pixel = 0;
-	if (x1_scaled % 2 == 0)
-	{
-		pixel = x1_scaled * 8 + y1_scaled;
-	}
-	else
-	{
-		pixel = x1_scaled * 8 + (7 - y1_scaled);
-	}
-
+	uint16_t pixel = row_col_to_pixel(x1_scaled, y1_scaled);
 	WS2812B_set_pixel_color(pixel, 0, 8, 0);
 
 	return;
+}
+
+void bresenham_line(uint8_t x0, uint8_t x1, uint8_t y0, uint8_t y1)
+{
+	uint8_t m_new = 2 * (y1 - y0);
+	uint8_t slope_error_new = m_new - (x1 - x0);
+	for (int x = x0, y = y0; x <= x1; x++)
+	{
+		WS2812B_set_pixel_color(x + y, 0, 8, 0);
+		slope_error_new += m_new;
+
+		if (slope_error_new >= 0)
+		{
+			y++;
+			slope_error_new -= 2 * (x1 - x0);
+		}
+	}
+}
+
+static uint16_t row_col_to_pixel(uint8_t row, uint8_t col)
+{
+	if (row % 2 == 0)
+	{
+		return row * 8 + col;
+	}
+	else
+	{
+		return row * 8 + (7 - col);
+	}
 }
 
 int16_t abs_impl(int16_t val)
