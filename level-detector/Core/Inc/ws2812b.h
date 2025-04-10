@@ -23,6 +23,8 @@ extern DMA_HandleTypeDef hdma_tim3_ch1_trig;
 #define BITS_PER_TRANSFER 24	// 3 colors, 8 bits per color
 #define RESET_FRAMES 17			// shortest duration of LOW data to communicate "reset" signal
 
+#define MATRIX_LENGTH 8
+
 // RESET_FRAMES prepended to data to signify a new dataframe is being sent
 extern uint16_t led_pwm_data[RESET_FRAMES + NUM_LEDS][BITS_PER_TRANSFER];
 
@@ -38,7 +40,7 @@ void WS2812B_point(AccelData accel_values);
 
 void bresenham_line_serpentine(uint8_t row0, uint8_t col0, uint8_t row1, uint8_t col1);
 
-static uint16_t row_col_to_pixel(uint8_t row, uint8_t col);
+uint16_t row_col_to_pixel(uint8_t row, uint8_t col);
 
 int16_t abs_impl(int16_t val);
 

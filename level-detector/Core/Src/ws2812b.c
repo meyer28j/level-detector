@@ -63,12 +63,13 @@ void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b
 
 void WS2812B_point(AccelData accel_values)
 {
+	static const uint8_t CENTER_PIXELS[4] = {27, 28, 35, 36};
+
 	WS2812B_clear();
 
 	// if level, display center 4 LEDs as green; return
 	if (is_level(accel_values))
 	{
-		static const uint8_t CENTER_PIXELS[4] = {27, 28, 35, 36};
 		for (int i = 0; i < sizeof(CENTER_PIXELS) / sizeof(CENTER_PIXELS[0]); i++)
 		{
 			WS2812B_set_pixel_color(CENTER_PIXELS[i], 32, 0, 0);
@@ -77,7 +78,9 @@ void WS2812B_point(AccelData accel_values)
 	}
 
 	// maximum number of steps from one side of the matrix to the other
-	static const uint8_t NUM_STEPS = 8 - 1;
+	static const uint8_t NUM_STEPS = MATRIX_LENGTH - 1;
+	// integer size of each step
+	static const uint16_t STEP_SIZE = MAX_AT_REST * 2 / MATRIX_LENGTH;
 
 	// X-AXIS: along breadboard long-side: decides COLUMN of pixel position
 	// Y-AXIS: along breadboard short-side : decides ROW of pixel position
@@ -87,10 +90,10 @@ void WS2812B_point(AccelData accel_values)
 	int8_t y0_scaled = accel_values.y < 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
 
 	// define line "end" by truncating the axis data to one of 8 positions in the range [0, 7]
-	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
-	uint8_t y1_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
-
-	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
+	uint8_t x1_scaled = 0;
+	uint8_t y1_scaled = 0;
+	x1_scaled = accel_values.x / STEP_SIZE == 0 ? x0_scaled : (uint8_t)(accel_values.x / STEP_SIZE + MATRIX_LENGTH / 2);
+	y1_scaled = accel_values.y / STEP_SIZE == 0 ? y0_scaled : (uint8_t)(accel_values.y / STEP_SIZE + MATRIX_LENGTH / 2);
 
 	bresenham_line_serpentine(x0_scaled, y0_scaled, x1_scaled, y1_scaled);
 
@@ -125,8 +128,10 @@ void bresenham_line_serpentine(uint8_t row0, uint8_t col0, uint8_t row1, uint8_t
 	}
 }
 
-static uint16_t row_col_to_pixel(uint8_t row, uint8_t col)
+uint16_t row_col_to_pixel(uint8_t row, uint8_t col)
 {
+	// LEDs cascade serpentine, so even rows must
+	// calculate column position from right-to-left
 	if (row % 2 == 0)
 	{
 		return row * 8 + col;
