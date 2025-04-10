@@ -36,7 +36,7 @@ void WS2812B_clear()
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b)
 {
-	if (led_index < 0 || led_index > NUM_LEDS)
+	if (led_index < 0 || led_index >= NUM_LEDS)
 	{
 		// invalid led_index
 		return;
