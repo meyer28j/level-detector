@@ -101,7 +101,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-        if (htim->Instance == TIM2)// && imu_data_ready)
+        if (htim->Instance == TIM2 && waiting_for_interrupt)// && imu_data_ready)
         {
         	// set flag; unset in main loop after data is processed
         	waiting_for_interrupt = 0;
