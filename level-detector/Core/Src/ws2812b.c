@@ -77,6 +77,12 @@ void WS2812B_point(AccelData accel_values)
 		return;
 	}
 
+	// light up 4 center pixels as blue for clearer "pointer" indication
+	for (int i = 0; i < sizeof(CENTER_PIXELS) / sizeof(CENTER_PIXELS[0]); i++)
+	{
+		WS2812B_set_pixel_color(CENTER_PIXELS[i], 0, 0, 16);
+	}
+
 	// maximum number of steps from one side of the matrix to the other
 	static const uint8_t NUM_STEPS = MATRIX_LENGTH - 1;
 	// integer size of each step
