@@ -35,6 +35,11 @@ void WS2812B_clear()
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b)
 {
+	if (led_index < 0 || led_index > NUM_LEDS)
+	{
+		// invalid led_index
+		return;
+	}
 	// set first communicated data as reset code
 
 	// extract each high and low bit from the 24-bit data series for each pixel's color
@@ -69,14 +74,23 @@ void WS2812B_point(AccelData accel_values)
 		return;
 	}
 
-	// X-AXIS: along breadboard long-side
-	// Y-AXIS: along breadboard short-side
+	// X-AXIS: along breadboard long-side: decides COLUMN of pixel position
+	// Y-AXIS: along breadboard short-side : decides ROW of pixel position
 
 	// truncate the axis data to one of 8 steps in the range [0, 7]
 	uint8_t x_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
 	int16_t y_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
 
-	uint16_t pixel = x_scaled * 8 + y_scaled;
+	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
+	uint16_t pixel = 0;
+	if (x_scaled % 2 == 0)
+	{
+		pixel = x_scaled * 8 + y_scaled;
+	}
+	else
+	{
+		pixel = x_scaled * 8 + (7 - y_scaled);
+	}
 
 	WS2812B_set_pixel_color(pixel, 0, 8, 0);
 	// select matrix "row" according to y-axis data
