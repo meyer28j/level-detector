@@ -48,12 +48,12 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 UART_HandleTypeDef huart2;
 
-/* Definitions for IMUDataFetch */
-osThreadId_t IMUDataFetchHandle;
-const osThreadAttr_t IMUDataFetch_attributes = {
-  .name = "IMUDataFetch",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+/* Definitions for Init */
+osThreadId_t InitHandle;
+const osThreadAttr_t Init_attributes = {
+  .name = "Init",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for LEDUpdate */
 osThreadId_t LEDUpdateHandle;
@@ -61,13 +61,6 @@ const osThreadAttr_t LEDUpdate_attributes = {
   .name = "LEDUpdate",
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
-};
-/* Definitions for Init */
-osThreadId_t InitHandle;
-const osThreadAttr_t Init_attributes = {
-  .name = "Init",
-  .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
 };
 /* USER CODE BEGIN PV */
 
@@ -83,9 +76,8 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM3_Init(void);
-void StartIMUDataFetch(void *argument);
-void StartLEDUpdate(void *argument);
 void StartInit(void *argument);
+void StartLEDUpdate(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -193,14 +185,11 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of IMUDataFetch */
-  IMUDataFetchHandle = osThreadNew(StartIMUDataFetch, NULL, &IMUDataFetch_attributes);
+  /* creation of Init */
+  InitHandle = osThreadNew(StartInit, NULL, &Init_attributes);
 
   /* creation of LEDUpdate */
   LEDUpdateHandle = osThreadNew(StartLEDUpdate, NULL, &LEDUpdate_attributes);
-
-  /* creation of Init */
-  InitHandle = osThreadNew(StartInit, NULL, &Init_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -460,21 +449,34 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartIMUDataFetch */
+/* USER CODE BEGIN Header_StartInit */
 /**
-  * @brief  Function implementing the IMUDataFetch thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartIMUDataFetch */
-void StartIMUDataFetch(void *argument)
+* @brief Function implementing the Init thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartInit */
+void StartInit(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+
+	while (accel_init() != HAL_OK) {} // configure I2C LSM303DLHC peripheral
+
+	CLIInit(&huart2); // initialize CLI
+	HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
+	WS2812B_init(); // start data flow to LED matrix
+
+	// set all LEDs to blue as indicator for init complete
+	// should be immediately overwritten once IMU data is read and written to LEDs
+	for (int i = 0; i < NUM_LEDS; i++)
+	{
+	  WS2812B_set_pixel_color(i, 0, 0, 8);
+	}
+	WS2812B_update();
+
+	// suspend task after executing
+	vTaskSuspend(NULL);
+
   /* USER CODE END 5 */
 }
 
@@ -510,37 +512,6 @@ void StartLEDUpdate(void *argument)
 	  WS2812B_update();
 	}
   /* USER CODE END StartLEDUpdate */
-}
-
-/* USER CODE BEGIN Header_StartInit */
-/**
-* @brief Function implementing the Init thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartInit */
-void StartInit(void *argument)
-{
-  /* USER CODE BEGIN StartInit */
-
-	while (accel_init() != HAL_OK) {} // configure I2C LSM303DLHC peripheral
-
-	CLIInit(&huart2); // initialize CLI
-	HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
-	WS2812B_init(); // start data flow to LED matrix
-
-	// set all LEDs to blue as indicator for init complete
-	// should be immediately overwritten once IMU data is read and written to LEDs
-	for (int i = 0; i < NUM_LEDS; i++)
-	{
-	  WS2812B_set_pixel_color(i, 0, 0, 8);
-	}
-	WS2812B_update();
-
-	// suspend task after executing
-	vTaskSuspend(NULL);
-
-  /* USER CODE END StartInit */
 }
 
 /**
