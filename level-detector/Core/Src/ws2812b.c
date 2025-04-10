@@ -7,7 +7,7 @@
 
 #include "ws2812b.h"
 
-uint16_t led_pwm_data[RESET_FRAMES + NUM_LEDS][BITS_PER_TRANSFER];
+uint16_t led_pwm_data[RESET_FRAMES + NUM_LEDS][BITS_PER_TRANSFER] = {0};
 
 void WS2812B_init()
 {
@@ -81,7 +81,7 @@ void WS2812B_point(AccelData accel_values)
 
 	// truncate the axis data to one of 8 steps in the range [0, 7]
 	uint8_t x_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
-	int16_t y_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
+	uint8_t y_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
 
 	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
 	uint16_t pixel = 0;
