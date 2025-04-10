@@ -20,9 +20,11 @@ extern DMA_HandleTypeDef hdma_tim3_ch1_trig;
 #define WS2812B_BIT_1_HIGH	54	// approx 0.85us
 
 #define NUM_LEDS 64
-#define BITS_PER_TRANSFER 24
+#define BITS_PER_TRANSFER 24	// 3 colors, 8 bits per color
+#define RESET_FRAMES 17			// shortest duration of LOW data to communicate "reset" signal
 
-extern uint32_t led_pwm_data[NUM_LEDS][BITS_PER_TRANSFER];
+// RESET_FRAMES prepended to data to signify a new dataframe is being sent
+extern uint16_t led_pwm_data[RESET_FRAMES + NUM_LEDS][BITS_PER_TRANSFER];
 
 void WS2812B_init();
 

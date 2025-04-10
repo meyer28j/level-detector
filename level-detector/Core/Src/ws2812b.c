@@ -7,7 +7,7 @@
 
 #include "ws2812b.h"
 
-uint32_t led_pwm_data[NUM_LEDS][BITS_PER_TRANSFER];
+uint16_t led_pwm_data[RESET_FRAMES + NUM_LEDS][BITS_PER_TRANSFER];
 
 void WS2812B_init()
 {
@@ -18,10 +18,11 @@ void WS2812B_init()
 
 void WS2812B_update()
 {
-	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t *)led_pwm_data, (uint16_t)(NUM_LEDS * BITS_PER_TRANSFER));
+	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t *)led_pwm_data, (uint16_t)((RESET_FRAMES + NUM_LEDS) * BITS_PER_TRANSFER));
+	// TODO: Replace delay + stop call with timer callback
+	//		 -> DMA is non-blocking
 	HAL_Delay(2);
 	HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1);
-	HAL_Delay(2);
 }
 
 void WS2812B_clear()
@@ -40,7 +41,9 @@ void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b
 		// invalid led_index
 		return;
 	}
-	// set first communicated data as reset code
+	// set first communicated data as reset code by
+	// adjusting led_index to end of prefixed reset frame
+	led_index += RESET_FRAMES;
 
 	// extract each high and low bit from the 24-bit data series for each pixel's color
 	// data sent in MSB first as [8 bits GREEN][8 bits RED][8 bits BLUE]
@@ -70,7 +73,6 @@ void WS2812B_point(AccelData accel_values)
 		{
 			WS2812B_set_pixel_color(CENTER_PIXELS[i], 32, 0, 0);
 		}
-		WS2812B_update();
 		return;
 	}
 
