@@ -7,8 +7,6 @@
 
 #include "i2c.h"
 
-static const uint16_t MAX_TIMEOUT = 5000;
-
 HAL_StatusTypeDef accel_init()
 {
 	uint8_t ctrl_reg1_a_config = 0b01010111; // ODR = 100Hz, LPen = 0, Zen = 1, Yen = 1, Xen = 1
