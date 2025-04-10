@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -48,13 +49,32 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 UART_HandleTypeDef huart2;
 
+/* Definitions for IMUDataFetch */
+osThreadId_t IMUDataFetchHandle;
+const osThreadAttr_t IMUDataFetch_attributes = {
+  .name = "IMUDataFetch",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for LEDUpdate */
+osThreadId_t LEDUpdateHandle;
+const osThreadAttr_t LEDUpdate_attributes = {
+  .name = "LEDUpdate",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+/* Definitions for Init */
+osThreadId_t InitHandle;
+const osThreadAttr_t Init_attributes = {
+  .name = "Init",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* USER CODE BEGIN PV */
-uint8_t RXChar; // input character from HAL_UART
 
+uint8_t RXChar; // input character from HAL_UART
 HAL_StatusTypeDef status; // HAL_OK, HAL_ERROR, HAL_BUSY, HAL_TIMEOUT
 
-uint8_t imu_data_ready = 0; // flag set by IMU ready interrupt
-uint8_t waiting_for_interrupt = 1; // flag set by refresh timer if imu_data_ready == 1; caught by main to refresh CLI and LEDs
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,6 +85,10 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+void StartIMUDataFetch(void *argument);
+void StartLEDUpdate(void *argument);
+void StartInit(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -99,21 +123,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         return;
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-        if (htim->Instance == TIM2 && waiting_for_interrupt)// && imu_data_ready)
-        {
-        	// set flag; unset in main loop after data is processed
-        	waiting_for_interrupt = 0;
-        }
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	return;
+	/*
 	if (GPIO_Pin == GPIO_PIN_9)
 	{
-		imu_data_ready = 1;
+    	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    	vTaskNotifyGiveFromISR(IMUDataFetchHandle, &xHigherPriorityTaskWoken);
+    	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
+	*/
 }
 
 /* USER CODE END 0 */
@@ -154,19 +174,49 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  while (accel_init() != HAL_OK) {} // configure I2C LSM303DLHC peripheral
-
-  CLIInit(&huart2); // initialize CLI
-  HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
-  timer_start(&htim2); // start refresh timer
-  WS2812B_init(); // start data flow to LED matrix
-
-  for (int i = 0; i < NUM_LEDS; i++)
-  {
-	  WS2812B_set_pixel_color(i, 0, 0, 8);
-  }
-  WS2812B_update();
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of IMUDataFetch */
+  IMUDataFetchHandle = osThreadNew(StartIMUDataFetch, NULL, &IMUDataFetch_attributes);
+
+  /* creation of LEDUpdate */
+  LEDUpdateHandle = osThreadNew(StartLEDUpdate, NULL, &LEDUpdate_attributes);
+
+  /* creation of Init */
+  InitHandle = osThreadNew(StartInit, NULL, &Init_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -175,19 +225,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	if (!waiting_for_interrupt)
-	{
-		// fetch accelerometer data
-		AccelData accel_values = read_accelerometer_data();
-		// handle console refresh
-		RefreshStatus(&huart2, accel_values);
-		WS2812B_point(accel_values);
-		WS2812B_update();
-		// reset flags
-		imu_data_ready = 0; // set by IMU ready interrupt
-		waiting_for_interrupt = 1; // set by refresh timer if imu data is ready
-	}
   }
   /* USER CODE END 3 */
 }
@@ -419,7 +456,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
@@ -459,15 +496,15 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PA9 */
   GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -477,6 +514,112 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartIMUDataFetch */
+/**
+  * @brief  Function implementing the IMUDataFetch thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartIMUDataFetch */
+void StartIMUDataFetch(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartLEDUpdate */
+/**
+* @brief Function implementing the LEDUpdate thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLEDUpdate */
+void StartLEDUpdate(void *argument)
+{
+  /* USER CODE BEGIN StartLEDUpdate */
+  /* Infinite loop */
+  for(;;)
+  	{
+	  // wait for notification from refresh timer
+	  ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+	  // fetch accelerometer data
+	  AccelData accel_values = read_accelerometer_data();
+
+	  // handle console refresh
+	  RefreshStatus(&huart2, accel_values);
+
+	  // update led dispay
+	  WS2812B_point(accel_values);
+	  WS2812B_update();
+	}
+  /* USER CODE END StartLEDUpdate */
+}
+
+/* USER CODE BEGIN Header_StartInit */
+/**
+* @brief Function implementing the Init thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartInit */
+void StartInit(void *argument)
+{
+  /* USER CODE BEGIN StartInit */
+
+	while (accel_init() != HAL_OK) {} // configure I2C LSM303DLHC peripheral
+
+	CLIInit(&huart2); // initialize CLI
+	HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
+	WS2812B_init(); // start data flow to LED matrix
+
+	// set all LEDs to blue as indicator for init complete
+	// should be immediately overwritten once IMU data is read and written to LEDs
+	for (int i = 0; i < NUM_LEDS; i++)
+	{
+	  WS2812B_set_pixel_color(i, 0, 0, 8);
+	}
+	WS2812B_update();
+
+	timer_start(&htim2); // start refresh timer
+
+	// suspend task after executing
+	vTaskSuspend(NULL);
+
+  /* USER CODE END StartInit */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM4 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM4) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+  if (htim->Instance == TIM2)
+  {
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	vTaskNotifyGiveFromISR(LEDUpdateHandle, &xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
