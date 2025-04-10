@@ -79,27 +79,26 @@ void WS2812B_point(AccelData accel_values)
 	// X-AXIS: along breadboard long-side: decides COLUMN of pixel position
 	// Y-AXIS: along breadboard short-side : decides ROW of pixel position
 
-	// truncate the axis data to one of 8 steps in the range [0, 7]
-	uint8_t x_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
-	uint8_t y_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
+	// define line "start" as one of 4 center pixels
+	int8_t x0_scaled = 3 ? accel_values.x < 0 : 4;
+	int8_t y0_scaled = 3 ? accel_values.y > 0 : 4;
+
+	// define line "end" by truncating the axis data to one of 8 steps in the range [0, 7]
+	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
+	uint8_t y1_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * 7 / (2 * MAX_AT_REST));
 
 	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
 	uint16_t pixel = 0;
-	if (x_scaled % 2 == 0)
+	if (x1_scaled % 2 == 0)
 	{
-		pixel = x_scaled * 8 + y_scaled;
+		pixel = x1_scaled * 8 + y1_scaled;
 	}
 	else
 	{
-		pixel = x_scaled * 8 + (7 - y_scaled);
+		pixel = x1_scaled * 8 + (7 - y1_scaled);
 	}
 
 	WS2812B_set_pixel_color(pixel, 0, 8, 0);
-	// select matrix "row" according to y-axis data
-
-
-
-	// select matrix "column" according to x-axis data
 
 	return;
 }
