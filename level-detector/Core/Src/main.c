@@ -53,7 +53,8 @@ uint8_t RXChar; // input character from HAL_UART
 
 HAL_StatusTypeDef status; // HAL_OK, HAL_ERROR, HAL_BUSY, HAL_TIMEOUT
 
-uint8_t imu_data_ready = 0; // flag set by refresh timer; caught by main to refresh CLI and LEDs
+uint8_t imu_data_ready = 0; // flag set by IMU ready interrupt
+uint8_t waiting_for_interrupt = 1; // flag set by refresh timer if imu_data_ready == 1; caught by main to refresh CLI and LEDs
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,18 +99,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         return;
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-        // do nothing! :O
-}
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-        if (htim->Instance == TIM2 && !imu_data_ready)
+        if (htim->Instance == TIM2)// && imu_data_ready)
         {
         	// set flag; unset in main loop after data is processed
-        	imu_data_ready = 1;
+        	waiting_for_interrupt = 0;
         }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == 2)
+	{
+		imu_data_ready = 1;
+	}
 }
 
 /* USER CODE END 0 */
@@ -150,10 +154,8 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  if (accel_init() != HAL_OK) // configure I2C LSM303DLHC peripheral
-   {
- 	  Error_Handler();
-   }
+  while (accel_init() != HAL_OK) {} // configure I2C LSM303DLHC peripheral
+
   CLIInit(&huart2); // initialize CLI
   HAL_UART_Receive_IT(&huart2, &RXChar, 1); // start receiving CLI input
   timer_start(&htim2); // start refresh timer
@@ -173,7 +175,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if (imu_data_ready)
+	if (!waiting_for_interrupt)
 	{
 		// fetch accelerometer data
 		AccelData accel_values = read_accelerometer_data();
@@ -181,28 +183,10 @@ int main(void)
 		RefreshStatus(&huart2, accel_values);
 		WS2812B_point(accel_values);
 		WS2812B_update();
-		// reset flag; set by refresh timer only if unset on timeout
-		imu_data_ready = 0;
+		// reset flags
+		imu_data_ready = 0; // set by IMU ready interrupt
+		waiting_for_interrupt = 1; // set by refresh timer if imu data is ready
 	}
-	//WS2812B_point(read_accelerometer_data());
-	// TMP: test code to observe led matrix updating
-	  /*
-	for (int j = 0; j < NUM_LEDS; j++)
-	{
-		WS2812B_set_pixel_color(j, 0, 0, 8);
-		WS2812B_update();
-	}
-	for (int j = 0; j < NUM_LEDS; j++)
-	{
-		WS2812B_set_pixel_color(j, 0, 8, 0);
-		WS2812B_update();
-	}
-	for (int j = 0; j < NUM_LEDS; j++)
-	{
-		WS2812B_set_pixel_color(j, 8, 0, 0);
-		WS2812B_update();
-	}
-*/
   }
   /* USER CODE END 3 */
 }
@@ -465,6 +449,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PA5 */
   GPIO_InitStruct.Pin = GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -473,6 +463,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
