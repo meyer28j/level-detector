@@ -43,7 +43,6 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
@@ -60,7 +59,7 @@ const osThreadAttr_t IMUDataFetch_attributes = {
 osThreadId_t LEDUpdateHandle;
 const osThreadAttr_t LEDUpdate_attributes = {
   .name = "LEDUpdate",
-  .stack_size = 256 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for Init */
@@ -83,7 +82,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 void StartIMUDataFetch(void *argument);
 void StartLEDUpdate(void *argument);
@@ -170,7 +168,6 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
@@ -298,58 +295,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 50000;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 200;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
-  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -543,11 +488,16 @@ void StartIMUDataFetch(void *argument)
 void StartLEDUpdate(void *argument)
 {
   /* USER CODE BEGIN StartLEDUpdate */
+
+  const TickType_t xFrequency = pdMS_TO_TICKS(300);
+  TickType_t xLastWakeTime;
+
+  xLastWakeTime = xTaskGetTickCount();
+
   /* Infinite loop */
   for(;;)
   	{
-	  // wait for notification from refresh timer
-	  ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+	  vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
 	  // fetch accelerometer data
 	  AccelData accel_values = read_accelerometer_data();
@@ -587,8 +537,6 @@ void StartInit(void *argument)
 	}
 	WS2812B_update();
 
-	timer_start(&htim2); // start refresh timer
-
 	// suspend task after executing
 	vTaskSuspend(NULL);
 
@@ -612,12 +560,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  if (htim->Instance == TIM2)
-  {
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	vTaskNotifyGiveFromISR(LEDUpdateHandle, &xHigherPriorityTaskWoken);
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-  }
+
   /* USER CODE END Callback 1 */
 }
 
