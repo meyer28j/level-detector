@@ -84,7 +84,7 @@ void WS2812B_point(AccelData accel_values)
 
 	// define line "start" as one of 4 center pixels
 	int8_t x0_scaled = accel_values.x < 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
-	int8_t y0_scaled = accel_values.y > 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
+	int8_t y0_scaled = accel_values.y < 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
 
 	// define line "end" by truncating the axis data to one of 8 positions in the range [0, 7]
 	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
