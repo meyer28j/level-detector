@@ -19,6 +19,7 @@
 #define LSM303DLHC_DATA_MAX_BYTES (6) // 2 bytes of data per axis (X_L, X_H, Y_L, Y_H, Z_L, Z_H)
 #define LSM303DLHC_FLAG_AUTO_INCREMENT (0x80) // OR with subaddress to signal that the data register should auto-increment
 #define LSM303DLHC_CTRL_REG1_A (0x20) // data rate selection, low-power mode, and X/Y/Z axis-enable
+#define LSM303DLHC_CTRL_REG3_A (0x22) // interrupt enable
 
 /**
  * @brief Specifies the minimum threshold of axes readings before accepting that the device is level.
