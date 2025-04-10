@@ -83,33 +83,44 @@ void WS2812B_point(AccelData accel_values)
 	// Y-AXIS: along breadboard short-side : decides ROW of pixel position
 
 	// define line "start" as one of 4 center pixels
-	int8_t x0_scaled = NUM_STEPS / 2 ? accel_values.x < 0 : NUM_STEPS / 2 + 1;
-	int8_t y0_scaled = NUM_STEPS / 2 ? accel_values.y > 0 : NUM_STEPS / 2 + 1;
+	int8_t x0_scaled = accel_values.x < 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
+	int8_t y0_scaled = accel_values.y > 0 ? NUM_STEPS / 2 : NUM_STEPS / 2 + 1;
 
 	// define line "end" by truncating the axis data to one of 8 positions in the range [0, 7]
 	uint8_t x1_scaled = (uint8_t)((accel_values.x + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
 	uint8_t y1_scaled = (uint8_t)((accel_values.y + MAX_AT_REST) * NUM_STEPS / (2 * MAX_AT_REST));
 
 	// LEDs cascade serpentine, so even rows must calculate column position from right-to-left
-	uint16_t pixel = row_col_to_pixel(x1_scaled, y1_scaled);
-	WS2812B_set_pixel_color(pixel, 0, 8, 0);
+
+	bresenham_line_serpentine(x0_scaled, y0_scaled, x1_scaled, y1_scaled);
 
 	return;
 }
 
-void bresenham_line(uint8_t x0, uint8_t x1, uint8_t y0, uint8_t y1)
+void bresenham_line_serpentine(uint8_t row0, uint8_t col0, uint8_t row1, uint8_t col1)
 {
-	uint8_t m_new = 2 * (y1 - y0);
-	uint8_t slope_error_new = m_new - (x1 - x0);
-	for (int x = x0, y = y0; x <= x1; x++)
-	{
-		WS2812B_set_pixel_color(x + y, 0, 8, 0);
-		slope_error_new += m_new;
+	int16_t dx = abs_impl(col1 - col0);
+	int16_t dy = abs_impl(row1 - row0);
+	int16_t sx = (col0 < col1) ? 1 : -1;
+	int16_t sy = (row0 < row1) ? 1 : -1;
+	int16_t err = dx - dy;
 
-		if (slope_error_new >= 0)
+	while(1)
+	{
+		WS2812B_set_pixel_color(row_col_to_pixel(row0, col0), 0, 8, 0);
+
+		if (row0 == row1 && col0 == col1) break;
+
+		int16_t e2 = 2 * err;
+		if (e2 > -dy)
 		{
-			y++;
-			slope_error_new -= 2 * (x1 - x0);
+			err -= dy;
+			col0 += sx;
+		}
+		if (e2 < dx)
+		{
+			err += dx;
+			row0 += sy;
 		}
 	}
 }
@@ -128,5 +139,5 @@ static uint16_t row_col_to_pixel(uint8_t row, uint8_t col)
 
 int16_t abs_impl(int16_t val)
 {
-	return val ? val >= 0 : -val;
+	return val >= 0 ? val : -val;
 }
