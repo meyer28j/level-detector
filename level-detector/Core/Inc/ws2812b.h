@@ -36,6 +36,8 @@ void WS2812B_clear();
 
 void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b);
 
+void WS2812B_set_center_color(uint8_t g, uint8_t r, uint8_t b);
+
 void WS2812B_point(AccelData accel_values);
 
 void bresenham_line_serpentine(uint8_t row0, uint8_t col0, uint8_t row1, uint8_t col1);

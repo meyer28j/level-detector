@@ -61,27 +61,30 @@ void WS2812B_set_pixel_color(uint16_t led_index, uint8_t g, uint8_t r, uint8_t b
 	}
 }
 
-void WS2812B_point(AccelData accel_values)
+void WS2812B_set_center_color(uint8_t g, uint8_t r, uint8_t b)
 {
 	static const uint8_t CENTER_PIXELS[4] = {27, 28, 35, 36};
 
+	for (int i = 0; i < sizeof(CENTER_PIXELS) / sizeof(CENTER_PIXELS[0]); i++)
+	{
+		WS2812B_set_pixel_color(CENTER_PIXELS[i], g, r, b);
+	}
+
+}
+
+void WS2812B_point(AccelData accel_values)
+{
 	WS2812B_clear();
 
 	// if level, display center 4 LEDs as green; return
 	if (is_level(accel_values))
 	{
-		for (int i = 0; i < sizeof(CENTER_PIXELS) / sizeof(CENTER_PIXELS[0]); i++)
-		{
-			WS2812B_set_pixel_color(CENTER_PIXELS[i], 32, 0, 0);
-		}
+		WS2812B_set_center_color(32, 0, 0);
 		return;
 	}
 
-	// light up 4 center pixels as blue for clearer "pointer" indication
-	for (int i = 0; i < sizeof(CENTER_PIXELS) / sizeof(CENTER_PIXELS[0]); i++)
-	{
-		WS2812B_set_pixel_color(CENTER_PIXELS[i], 0, 0, 16);
-	}
+	// display center 4 LEDs as blue for clearer "pointer" indication
+	WS2812B_set_center_color(0, 0, 16);
 
 	// maximum number of steps from one side of the matrix to the other
 	static const uint8_t NUM_STEPS = MATRIX_LENGTH - 1;
