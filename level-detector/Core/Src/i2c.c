@@ -67,7 +67,7 @@ uint8_t is_level(AccelData accel_values)
 
 int8_t is_near_level(AccelData accel_values)
 {
-	uint16_t abs_x = accel_values.x >= 0 ? accel_values.x : -accel_values.y;
+	uint16_t abs_x = accel_values.x >= 0 ? accel_values.x : -accel_values.x;
 	uint16_t abs_y = accel_values.y >= 0 ? accel_values.y : -accel_values.y;
 	uint16_t magnitude = abs_x + abs_y;
 	if (magnitude > LEVEL_THRESHOLD_OUTER)
