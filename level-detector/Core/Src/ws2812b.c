@@ -133,8 +133,17 @@ void WS2812B_point(AccelData accel_values)
 		return;
 	}
 
-	// display center 4 LEDs as blue for clearer "pointer" indication
-	WS2812B_set_center_color(0, 0, 16);
+	uint8_t is_near_level_step = is_near_level(accel_values);
+	if (is_near_level_step != 0)
+	{
+		// display center 4 LEDs as green, modulated brighter the closer to level the device is
+		WS2812B_set_center_color(is_near_level_step * 2, 0, 0);
+	}
+	else
+	{
+		// display center 4 LEDs as blue for clearer "pointer" indication
+		WS2812B_set_center_color(0, 0, 16);
+	}
 
 	// if any axis is outside the max range,
 	// display the corresponding edge as red; return

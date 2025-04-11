@@ -67,11 +67,13 @@ uint8_t is_level(AccelData accel_values)
 
 int8_t is_near_level(AccelData accel_values)
 {
-	uint16_t magnitude = abs_impl(accel_values.x) + abs_impl(accel_values.y);
-	if (magnitude > 2 * LEVEL_THRESHOLD)
+	uint16_t abs_x = accel_values.x >= 0 ? accel_values.x : -accel_values.y;
+	uint16_t abs_y = accel_values.y >= 0 ? accel_values.y : -accel_values.y;
+	uint16_t magnitude = abs_x + abs_y;
+	if (magnitude > LEVEL_THRESHOLD_OUTER)
 	{
-		return;
+		return 0;
 	}
-
-	return magnitude / LEVEL_THRESHOLD_STEP;
+	uint8_t step_size = (LEVEL_THRESHOLD_OUTER - LEVEL_THRESHOLD) / LEVEL_THRESHOLD_STEPS;
+	return LEVEL_THRESHOLD_STEPS - (magnitude - LEVEL_THRESHOLD) / step_size;
 }
