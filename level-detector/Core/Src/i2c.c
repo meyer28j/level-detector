@@ -54,7 +54,6 @@ AccelData read_accelerometer_data()
 
 uint8_t is_level(AccelData accel_values)
 {
-	// enable LED if level
 	if (accel_values.y < LEVEL_THRESHOLD && accel_values.y > -LEVEL_THRESHOLD &&
 			accel_values.x < LEVEL_THRESHOLD && accel_values.x > -LEVEL_THRESHOLD)
 	{
@@ -64,4 +63,15 @@ uint8_t is_level(AccelData accel_values)
 	{
 		return 0;
 	}
+}
+
+int8_t is_near_level(AccelData accel_values)
+{
+	uint16_t magnitude = abs_impl(accel_values.x) + abs_impl(accel_values.y);
+	if (magnitude > 2 * LEVEL_THRESHOLD)
+	{
+		return;
+	}
+
+	return magnitude / LEVEL_THRESHOLD_STEP;
 }
