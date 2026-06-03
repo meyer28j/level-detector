@@ -6,6 +6,14 @@ This project is to create a device to be used as a digital level-indicator. It c
 
 Physically, the device is a small box containing the MCU, power supply, and motion sensor with an exterior LED matrix on the top face.
 
+---
+
+[View the demo on Youtube.](https://www.youtube.com/shorts/PYWkurkAO90)
+
+![Demo prototype of device in non-level orientation pointing towards the direction it should be rotated](./level-detector.png)
+
+---
+
 **1.1 Build Instructions**
 
 Follow these steps to build and flash the program to the STM32F103RB board after wiring the components together:
